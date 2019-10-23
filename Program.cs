@@ -15,24 +15,14 @@ namespace Scion
         {
             if (options.DataDirectory == null)
             {
-                options.DataDirectory = System.Environment.GetEnvironmentVariable("SCION_DATA");
-            }
-
-            if (options.DataDirectory == null)
-            {
                 Console.Error.WriteLine("Set SCION_DATA or pass -d");
                 Environment.Exit(0);
             }
 
-            if (options.SourceURL == null)
-            {
-                options.SourceURL = new Uri("https://dynasty-scans.com/");
-            }
-
-            var data = new Data(options.DataDirectory);
+            var data = new Data(options.DataDirectory, options.BaseDate);
             data.Check();
             var source = new Scraper(options.SourceURL);
-            var latestRelease = await source.GetLatestRelease();
+            var latestRelease = await source.GetLatestRelease(data.GetEarliestDate());
             data.Write(latestRelease);
         }
     }

@@ -6,11 +6,14 @@ namespace Scion
     class Data
     {
         private readonly string directory;
+        private readonly DateTime? baseDate;
+
         private string outputFile => Path.Combine(directory, "output.txt");
 
-        public Data(string directory)
+        public Data(string directory, DateTime? baseDate)
         {
             this.directory = directory;
+            this.baseDate = baseDate?.Date;
         }
 
         public void Check()
@@ -35,6 +38,11 @@ namespace Scion
             Console.WriteLine($"Initialising data directory: {directory}");
             Directory.CreateDirectory(directory);
             File.Create(outputFile).Dispose();
+        }
+
+        public DateTime GetEarliestDate() 
+        {
+            return baseDate ?? throw new Exception("base date is currently required");
         }
 
         public void Write(DateTime latestRelease)
