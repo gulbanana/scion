@@ -39,24 +39,25 @@ namespace Scion
                 var config = data.Load();
 
                 var chapters = await source.GetIndexChapters(data.GetEarliestDate(), cts.Token);
+                var unfiltered = chapters.Where(Filter(config)).ToList();
+                var missing = unfiltered.Where(c => !data.HasChapter(c)).ToList();
 
-                foreach (var chapter in chapters.Where(Filter(config)).OrderBy(c => c.ReleaseDate))
+                Console.WriteLine($"{chapters.Count} chapters, {unfiltered.Count} unfiltered, {missing.Count} groups to download");
+
+                foreach (var chapter in missing)
                 {
-                    if (!data.HasChapter(chapter))
+                    // XXX download images
+                    if (chapter.Series != null)
                     {
-                        // XXX download images
-                        if (chapter.Series != null)
+                        var allSeriesChapters = await source.GetSeriesChapters(chapter, cts.Token);
+                        foreach (var seriesChapter in allSeriesChapters.Where(c => !data.HasChapter(c)))
                         {
-                            var allSeriesChapters = await source.GetSeriesChapters(chapter, cts.Token);
-                            foreach (var seriesChapter in allSeriesChapters)
-                            {
-                                data.WriteChapter(seriesChapter);
-                            }
+                            data.WriteChapter(seriesChapter);
                         }
-                        else
-                        {
-                            data.WriteChapter(chapter);
-                        }
+                    }
+                    else
+                    {
+                        data.WriteChapter(chapter);
                     }
                 }
 
