@@ -1,0 +1,32 @@
+{
+  "chapters": {
+    "include": true,
+    "tagBlacklist": [
+      "ecchi",
+      "nsfw",
+      "sex",
+      "yuri"
+    ],
+    "tagWhitelist": []
+  },
+  "oneshots": {
+    "include": true,
+    "tagBlacklist": [
+      "ecchi",
+      "nsfw",
+      "sex",
+      "yuri"
+    ],
+    "tagWhitelist": []
+  },
+  "doujins": {
+    "include": true,
+    "tagBlacklist": [
+      "ecchi",
+      "nsfw",
+      "sex",
+      "yuri"
+    ],
+    "tagWhitelist": []
+  }
+}

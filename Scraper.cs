@@ -80,14 +80,21 @@ namespace Scion
                 throw new Exception($"expected <a class='chapter'>, found {block.ToString()}");
             }
 
+            var doujin = block.QuerySelector(".title .doujins")?.TextContent;
+            if (doujin != null)
+            {
+                doujin = doujin.Substring(0, doujin.Length - " Doujin".Length);
+            }
+
             return new Chapter
             {
                 ReleaseDate = date.Value,
                 Link = new Uri(sourceURL, anchor.Href),
                 Thumbnail = new Uri(sourceURL, block.QuerySelector("img").GetAttribute("src")),
-                Title = block.QuerySelector(".title").ChildNodes.First().TextContent.Trim(), // ignoring doujins
+                Title = block.QuerySelector(".title").ChildNodes.First().TextContent.Trim(),
                 Authors = block.QuerySelector(".authors").TextContent,
-                Tags = block.QuerySelectorAll(".tags > .label").Select(t => t.TextContent).ToList()
+                Tags = block.QuerySelectorAll(".tags > .label").Select(t => t.TextContent).ToList(),
+                Doujin = doujin
             };
         }
     }

@@ -34,15 +34,28 @@ namespace Scion
 
         static Func<Chapter, bool> Filter(ConfigFile config) => chapter =>
         {
-            if (config.TagWhitelist.Any())
+            var section = chapter.Doujin == null ? config.Manga : config.Doujinshi;
+
+            if (!section.Include)
             {
-                if (!chapter.Tags.Any(t => config.TagWhitelist.Any(tag => t.Contains(tag, StringComparison.OrdinalIgnoreCase))))
-                {
-                    return false;
-                }
+                return false;
             }
 
-            foreach (var tag in config.TagBlacklist)
+            if (section.Whitelist.Any())
+            {
+                var match = false;
+
+                foreach (var tag in section.Whitelist)
+                {
+                    match = match || chapter.Tags.Any(t => section.Whitelist.Any(tag => t.Contains(tag, StringComparison.OrdinalIgnoreCase)));
+                    match = match || chapter.Authors.Equals(tag, StringComparison.OrdinalIgnoreCase);
+                    match = match || (chapter.Doujin?.Equals(tag, StringComparison.OrdinalIgnoreCase) ?? false);
+                }
+                
+                if (!match) return false;
+            }
+
+            foreach (var tag in section.Blacklist)
             {
                 if (chapter.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase)))
                 {
