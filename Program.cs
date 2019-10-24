@@ -50,6 +50,7 @@ namespace Scion
                     match = match || chapter.Tags.Any(t => section.Whitelist.Any(tag => t.Contains(tag, StringComparison.OrdinalIgnoreCase)));
                     match = match || chapter.Authors.Equals(tag, StringComparison.OrdinalIgnoreCase);
                     match = match || (chapter.Doujin?.Equals(tag, StringComparison.OrdinalIgnoreCase) ?? false);
+                    match = match || (chapter.Series?.Equals(tag, StringComparison.OrdinalIgnoreCase) ?? false);
                 }
                 
                 if (!match) return false;

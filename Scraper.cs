@@ -4,6 +4,7 @@ using AngleSharp.Html.Dom;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Scion
@@ -86,15 +87,39 @@ namespace Scion
                 doujin = doujin.Substring(0, doujin.Length - " Doujin".Length);
             }
 
+            var title = block.QuerySelector(".title").ChildNodes.First().TextContent.Trim();
+            
+            var series = default(string?);
+            var subtitle = default(string?);
+            var regularSeries = Regex.Match(title, @"(.*) ch([^: ]*)(: (.*))?");
+            if (regularSeries.Success)
+            {
+                series = regularSeries.Groups[1].Value;
+                subtitle = regularSeries.Groups[3].Success ? 
+                    $"Chapter {regularSeries.Groups[2].Value} - {regularSeries.Groups[4].Value}" :
+                    $"Chapter {regularSeries.Groups[2].Value}";
+            }
+            else
+            {
+                var irregularSeries = Regex.Match(title, @"(.*) : (.*)");
+                if (irregularSeries.Success)
+                {
+                    series = irregularSeries.Groups[1].Value;
+                    subtitle = irregularSeries.Groups[2].Value;
+                }
+            }
+
             return new Chapter
             {
                 ReleaseDate = date.Value,
                 Link = new Uri(sourceURL, anchor.Href),
                 Thumbnail = new Uri(sourceURL, block.QuerySelector("img").GetAttribute("src")),
-                Title = block.QuerySelector(".title").ChildNodes.First().TextContent.Trim(),
+                Title = title,
                 Authors = block.QuerySelector(".authors").TextContent,
                 Tags = block.QuerySelectorAll(".tags > .label").Select(t => t.TextContent).ToList(),
-                Doujin = doujin
+                Doujin = doujin,
+                Series = series,
+                Subtitle = subtitle
             };
         }
     }
