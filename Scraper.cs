@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Scion
@@ -21,7 +22,7 @@ namespace Scion
             config = Configuration.Default.WithDefaultLoader();
         }
 
-        public async Task<IReadOnlyList<Chapter>> GetIndexChapters(DateTime earliestDate)
+        public async Task<IReadOnlyList<Chapter>> GetIndexChapters(DateTime earliestDate, CancellationToken ct)
         {
             Console.WriteLine($"Reading {sourceURL} index from page 1 back to {earliestDate.ToShortDateString()}");
 
@@ -33,9 +34,10 @@ namespace Scion
 
             do 
             {
-                var pageURL = new Uri(sourceURL, $"/?page={pageNumber++}");
-                
-                var document = await context.OpenAsync(pageURL.ToString());            
+                var pageURL = new Uri(sourceURL, $"/?page={pageNumber++}");                
+                var document = await context.OpenAsync(pageURL.ToString(), ct);            
+                ct.ThrowIfCancellationRequested();
+
                 var leftColumn = document.QuerySelectorAll(":not(.span4) > h4, :not(.span4) > a.chapter");
 
                 var currentDate = default(DateTime?);
@@ -125,21 +127,24 @@ namespace Scion
             };
         }
 
-        public async Task<IReadOnlyList<Chapter>> GetSeriesChapters(Chapter sampleChapter)
+        public async Task<IReadOnlyList<Chapter>> GetSeriesChapters(Chapter sampleChapter, CancellationToken ct)
         {
             Console.WriteLine($"Reading chapters from \"{sampleChapter.Series}\"");
             if (sampleChapter.Series == null) throw new ArgumentException(nameof(sampleChapter.Series));
 
             var context = BrowsingContext.New(config);
 
-            var samplePage = await context.OpenAsync(sampleChapter.Link.ToString());
+            var samplePage = await context.OpenAsync(sampleChapter.Link.ToString(), ct);
+            ct.ThrowIfCancellationRequested();
+
             var seriesLink = samplePage.QuerySelector("#chapter-title > b > a").GetAttribute("href");
 
-            var seriesPage = await context.OpenAsync(new Uri(sourceURL, seriesLink).ToString());   
+            var seriesPage = await context.OpenAsync(new Uri(sourceURL, seriesLink).ToString(), ct);
+            ct.ThrowIfCancellationRequested();
+
             var seriesDoujin = seriesPage.QuerySelector(".doujin_tags > *")?.TextContent;          
             if (seriesDoujin != null) seriesDoujin = seriesDoujin.Substring(0, seriesDoujin.Length - " Doujin".Length);
             var seriesTags = seriesPage.QuerySelectorAll("#main > tag-tags > a").Select(t => t.TextContent).ToList();
-
             var chapterBlocks = seriesPage.QuerySelectorAll(".chapter-list > dd");
 
             return chapterBlocks.Select(b => ParseSeriesChapter(b, seriesDoujin, sampleChapter.Authors, sampleChapter.Series, sampleChapter.Thumbnail, seriesTags)).ToList();
