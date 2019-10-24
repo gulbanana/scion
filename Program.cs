@@ -51,7 +51,7 @@ namespace Scion
 
                 foreach (var tag in section.Whitelist)
                 {
-                    match = match || chapter.Tags.Any(t => section.Whitelist.Any(tag => t.Contains(tag, StringComparison.OrdinalIgnoreCase)));
+                    match = match || chapter.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase));
                     match = match || chapter.Authors.Equals(tag, StringComparison.OrdinalIgnoreCase);
                     match = match || (chapter.Doujin?.Equals(tag, StringComparison.OrdinalIgnoreCase) ?? false);
                     match = match || (chapter.Series?.Equals(tag, StringComparison.OrdinalIgnoreCase) ?? false);
@@ -62,10 +62,14 @@ namespace Scion
 
             foreach (var tag in section.Blacklist)
             {
-                if (chapter.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase)))
-                {
-                    return false;
-                }
+                var match = false;
+                
+                match = match || chapter.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase));
+                match = match || chapter.Authors.Equals(tag, StringComparison.OrdinalIgnoreCase);
+                match = match || (chapter.Doujin?.Equals(tag, StringComparison.OrdinalIgnoreCase) ?? false);
+                match = match || (chapter.Series?.Equals(tag, StringComparison.OrdinalIgnoreCase) ?? false);
+
+                if (match) return false;
             }
             
             return true;
