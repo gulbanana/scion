@@ -104,7 +104,7 @@ namespace Scion
             
             var series = default(string?);
             var subtitle = default(string?);
-            var regularSeries = Regex.Match(title, @"(.*?) ch([^: ]*)(: (.*))?");
+            var regularSeries = Regex.Match(title, @"(.*?) ch([0123456789]+)(: (.*))?");
             if (regularSeries.Success)
             {
                 series = regularSeries.Groups[1].Value;
@@ -163,7 +163,7 @@ namespace Scion
                 // volume header
                 if (tag.TagName == "DT")
                 {
-                    currentVolume = tag.TextContent;
+                    currentVolume = string.IsNullOrWhiteSpace(tag.TextContent) ? null : tag.TextContent;
                 }
 
                 // chapter within a volume
