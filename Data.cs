@@ -67,5 +67,62 @@ namespace Scion
         {
             return baseDate ?? throw new Exception("base date is currently required");
         }
+
+        public bool HasChapter(Chapter chapter)
+        {
+            var (containerPath, filePath) = GetLocation(chapter);
+
+            return File.Exists(filePath);
+        }
+
+        public void WriteChapter(Chapter chapter)
+        {
+            var (containerPath, filePath) = GetLocation(chapter);
+            
+            if (!Directory.Exists(containerPath))
+            {
+                Directory.CreateDirectory(containerPath);
+            }
+
+            if (!File.Exists(filePath))
+            {
+                Console.WriteLine($"Writing file: {filePath}");
+                File.WriteAllText(filePath, "");
+            }
+        }
+
+        private (string containerPath, string filePath) GetLocation(Chapter chapter)
+        {
+            var container = chapter.Series != null
+                ? $"{chapter.Authors} - {chapter.Series}"
+                : $"{chapter.Authors} - {chapter.Title}";
+
+            var filename = chapter.Series != null
+                ? chapter.Subtitle ?? "Chapter Title Missing"
+                : chapter.Title;
+
+            var containerPath = chapter.Doujin != null
+                ? Path.Combine(directory, Sanitise(chapter.Doujin), Sanitise(container))
+                : Path.Combine(directory, Sanitise(container));
+            
+            var filePath = Path.Combine(containerPath, Sanitise(filename));
+
+            return (containerPath, filePath);
+        }
+
+        private string Sanitise(string input)
+        {
+            return input
+                .Replace('\\', '＼')
+                .Replace('/', '／')
+                .Replace(':', '：')
+                .Replace('*', '⋆')
+                .Replace('?', '？')
+                .Replace('"', '\'')
+                .Replace('<', '_')
+                .Replace('>', '_')
+                .Replace('|', '_')
+                .TrimEnd('.');
+        }
     }
 }

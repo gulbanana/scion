@@ -27,8 +27,12 @@ namespace Scion
             var chapters = await source.GetChaptersFrom(data.GetEarliestDate());
 
             foreach (var chapter in chapters.Where(Filter(config)).OrderBy(c => c.ReleaseDate))
-            {                
-                Console.WriteLine(chapter);
+            {
+                if (!data.HasChapter(chapter))
+                {
+                    // XXX download images
+                    data.WriteChapter(chapter);
+                }
             }
         }
 
