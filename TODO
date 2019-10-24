@@ -1,3 +1,2 @@
 improve cancellation - can Console.CancelKeyPress work outside cmd? or is it https://github.com/dotnet/cli/issues/812
 also, why do we have to throw ourselves? anglesharp might not be passing it all the way down
-volumes - see https://dynasty-scans.com/series/adachi_and_shimamura_novel - not enough info to get subtitle from index page!

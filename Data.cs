@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 namespace Scion
@@ -71,8 +72,11 @@ namespace Scion
         public bool HasChapter(Chapter chapter)
         {
             var (containerPath, filePath) = GetLocation(chapter);
+            var filename = Path.GetFileName(filePath);
 
-            return File.Exists(filePath);
+            return File.Exists(filePath) || 
+                   Directory.GetFiles(containerPath).Any(f => f.EndsWith(filename) && 
+                                                              Path.GetFileName(f).StartsWith("Volume"));
         }
 
         public void WriteChapter(Chapter chapter)
@@ -88,6 +92,10 @@ namespace Scion
             {
                 Console.WriteLine($"Writing file: {filePath}");
                 File.WriteAllText(filePath, "");
+            }
+            else
+            {
+                Console.Error.WriteLine($"Skipping write: {filePath} already exists");
             }
         }
 

@@ -123,7 +123,7 @@ namespace Scion
                 Tags = block.QuerySelectorAll(".tags > .label").Select(t => t.TextContent).ToList(),
                 Doujin = doujin,
                 Series = series,
-                Subtitle = subtitle
+                Subtitle = subtitle?.Replace(":", " -")
             };
         }
 
@@ -145,16 +145,35 @@ namespace Scion
             var seriesDoujin = seriesPage.QuerySelector(".doujin_tags > *")?.TextContent;          
             if (seriesDoujin != null) seriesDoujin = seriesDoujin.Substring(0, seriesDoujin.Length - " Doujin".Length);
             var seriesTags = seriesPage.QuerySelectorAll("#main > tag-tags > a").Select(t => t.TextContent).ToList();
-            var chapterBlocks = seriesPage.QuerySelectorAll(".chapter-list > dd");
+            var chapterBlocks = seriesPage.QuerySelectorAll(".chapter-list > *");
 
-            return chapterBlocks.Select(b => ParseSeriesChapter(b, seriesDoujin, sampleChapter.Authors, sampleChapter.Series, sampleChapter.Thumbnail, seriesTags)).ToList();
+            var chapters = new List<Chapter>();
+            var currentVolume = default(string?);
+            foreach (var tag in chapterBlocks)
+            {
+                // volume header
+                if (tag.TagName == "DT")
+                {
+                    currentVolume = tag.TextContent;
+                }
+
+                // chapter within a volume
+                else if (tag.TagName == "DD")
+                {
+                    var chapter = ParseSeriesChapter(tag, seriesDoujin, sampleChapter.Authors, sampleChapter.Series, currentVolume, sampleChapter.Thumbnail, seriesTags);
+                    chapters.Add(chapter);
+                }
+            }
+
+            return chapters;
         }
 
-        private Chapter ParseSeriesChapter(IElement block, string? doujin, string authors, string series, Uri thumbnail, IReadOnlyList<string> tags)
+        private Chapter ParseSeriesChapter(IElement block, string? doujin, string authors, string series, string? volume, Uri thumbnail, IReadOnlyList<string> tags)
         {
             var date = block.QuerySelector("small").TextContent.Substring("released ".Length);
-            var subtitle = block.QuerySelector(".name").TextContent.Replace(":", " -");
+            var subtitle = block.QuerySelector(".name").TextContent;
             var title = subtitle.Contains(':') ? $"{series} {subtitle}" : $"{series}: {subtitle}";
+            if (volume != null) subtitle = $"{volume} - {subtitle}";
             var link = block.QuerySelector(".name").GetAttribute("href");
             var extraTags = block.QuerySelectorAll(".tags > a").Select(t => t.TextContent);         
 
@@ -167,7 +186,7 @@ namespace Scion
                 Authors = authors,
                 Title = title,
                 Series = series,
-                Subtitle = subtitle,
+                Subtitle = subtitle.Replace(":", " -"),
                 Tags = tags.Concat(extraTags).ToList()
             };
         }
