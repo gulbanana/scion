@@ -42,24 +42,27 @@ namespace Scion
                 var unfiltered = chapters.Where(Filter(config)).ToList();
                 var missing = unfiltered.Where(c => !data.HasChapter(c)).ToList();
 
-                Console.WriteLine($"{chapters.Count} chapters, {unfiltered.Count} unfiltered, {missing.Count} groups to download");
+                Console.WriteLine($"{chapters.Count} chapters, {unfiltered.Count} unfiltered, {missing.Count} missing");
 
-                foreach (var chapter in missing)
+                foreach (var chapter in unfiltered)
                 {
                     // XXX download images
                     try
                     {
-                        if (chapter.Series != null)
+                        if (!data.HasChapter(chapter))
                         {
-                            var allSeriesChapters = await source.GetSeriesChapters(chapter, cts.Token);
-                            foreach (var seriesChapter in allSeriesChapters.Where(c => !data.HasChapter(c)))
+                            if (chapter.Series != null)
                             {
-                                data.WriteChapter(seriesChapter);
+                                var allSeriesChapters = await source.GetSeriesChapters(chapter, cts.Token);
+                                foreach (var seriesChapter in allSeriesChapters.Where(c => !data.HasChapter(c)))
+                                {
+                                    data.WriteChapter(seriesChapter);
+                                }
                             }
-                        }
-                        else
-                        {
-                            data.WriteChapter(chapter);
+                            else
+                            {
+                                data.WriteChapter(chapter);
+                            }
                         }
                     }
                     catch (Exception e)
