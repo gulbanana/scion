@@ -54,9 +54,18 @@ namespace Scion
                             if (chapter.Series != null)
                             {
                                 var allSeriesChapters = await source.GetSeriesChapters(chapter, cts.Token);
-                                foreach (var seriesChapter in allSeriesChapters.Where(c => !data.HasChapter(c)))
+                                var missingSeriesChapters = allSeriesChapters.Where(c => !data.HasChapter(c)).ToList();
+                                
+                                if (missingSeriesChapters.Any())
                                 {
-                                    data.WriteChapter(seriesChapter);
+                                    foreach (var seriesChapter in missingSeriesChapters)
+                                    {
+                                        data.WriteChapter(seriesChapter);
+                                    }
+                                }
+                                else
+                                {
+                                    Console.Error.WriteLine($"All series chapters found, despite missing index chapter {chapter}");
                                 }
                             }
                             else
