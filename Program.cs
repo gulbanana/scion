@@ -65,6 +65,10 @@ namespace Scion
                             }
                         }
                     }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
                     catch (Exception e)
                     {
                         Console.Error.WriteLine($"Write chapter failed for {chapter}. Exception follows:");
