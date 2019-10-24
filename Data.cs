@@ -75,6 +75,7 @@ namespace Scion
             var filename = Path.GetFileName(filePath);
 
             return File.Exists(filePath) || 
+                   Directory.Exists(containerPath) && 
                    Directory.GetFiles(containerPath).Any(f => f.EndsWith(filename) && 
                                                               Path.GetFileName(f).StartsWith("Volume"));
         }
