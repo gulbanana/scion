@@ -47,17 +47,25 @@ namespace Scion
                 foreach (var chapter in missing)
                 {
                     // XXX download images
-                    if (chapter.Series != null)
+                    try
                     {
-                        var allSeriesChapters = await source.GetSeriesChapters(chapter, cts.Token);
-                        foreach (var seriesChapter in allSeriesChapters.Where(c => !data.HasChapter(c)))
+                        if (chapter.Series != null)
                         {
-                            data.WriteChapter(seriesChapter);
+                            var allSeriesChapters = await source.GetSeriesChapters(chapter, cts.Token);
+                            foreach (var seriesChapter in allSeriesChapters.Where(c => !data.HasChapter(c)))
+                            {
+                                data.WriteChapter(seriesChapter);
+                            }
+                        }
+                        else
+                        {
+                            data.WriteChapter(chapter);
                         }
                     }
-                    else
+                    catch (Exception e)
                     {
-                        data.WriteChapter(chapter);
+                        Console.Error.WriteLine($"Write chapter failed for {chapter}. Exception follows:");
+                        Console.Error.WriteLine(e.ToString());
                     }
                 }
 

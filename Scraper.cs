@@ -57,8 +57,17 @@ namespace Scion
                     // thumbnail within a day
                     else if (tag.ClassList.Contains("chapter"))
                     {
-                        var chapter = ParseIndexChapter(currentDate, tag);
-                        pageChapters.Add(chapter);
+                        try
+                        {
+                            var chapter = ParseIndexChapter(currentDate, tag);
+                            pageChapters.Add(chapter);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.Error.WriteLine("Parse failed. HTML and exception follow:");
+                            Console.Error.WriteLine(tag.ToHtml());
+                            Console.Error.WriteLine(e.ToString());
+                        }
                     }
                 }
 
