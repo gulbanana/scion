@@ -107,7 +107,7 @@ namespace Scion
             var regularSeries = Regex.Match(title, @"(.*?) ch([0123456789]+)(: (.*))?");
             if (regularSeries.Success)
             {
-                series = regularSeries.Groups[1].Value;
+                series = regularSeries.Groups[1].Value.Trim();
                 subtitle = regularSeries.Groups[3].Success ? 
                     $"Chapter {decimal.Parse(regularSeries.Groups[2].Value)} - {regularSeries.Groups[4].Value}" :
                     $"Chapter {decimal.Parse(regularSeries.Groups[2].Value)}";
