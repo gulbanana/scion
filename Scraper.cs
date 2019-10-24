@@ -128,7 +128,7 @@ namespace Scion
                 Link = new Uri(sourceURL, anchor.Href),
                 Thumbnail = new Uri(sourceURL, block.QuerySelector("img").GetAttribute("src")),
                 Title = title,
-                Authors = block.QuerySelector(".authors").TextContent.Trim(),
+                Authors = block.QuerySelector(".authors")?.TextContent.Trim() ?? "Unknown Author",
                 Tags = block.QuerySelectorAll(".tags > .label").Select(t => t.TextContent).ToList(),
                 Doujin = doujin,
                 Series = series,
