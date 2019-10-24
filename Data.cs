@@ -72,12 +72,11 @@ namespace Scion
         public bool HasChapter(Chapter chapter)
         {
             var (containerPath, filePath) = GetLocation(chapter);
-            var filename = Path.GetFileName(filePath);
+            var volumeSuffix = $" - {Path.GetFileName(filePath)}";
 
             return File.Exists(filePath) || 
                    Directory.Exists(containerPath) && 
-                   Directory.GetFiles(containerPath).Any(f => f.EndsWith(filename) && 
-                                                              Path.GetFileName(f).StartsWith("Volume"));
+                   Directory.GetFiles(containerPath).Any(f => f.EndsWith(volumeSuffix));
         }
 
         public void WriteChapter(Chapter chapter)
