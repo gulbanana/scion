@@ -95,7 +95,7 @@ namespace Scion
         {
             var container = chapter.Series != null
                 ? $"{chapter.Authors} - {chapter.Series}"
-                : $"{chapter.Authors} - {chapter.Title}";
+                : $"{chapter.Authors}";
 
             var filename = chapter.Series != null
                 ? chapter.Subtitle ?? "Chapter Title Missing"

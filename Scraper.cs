@@ -3,6 +3,7 @@ using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -12,17 +13,18 @@ namespace Scion
     class Scraper
     {
         private readonly Uri sourceURL;
+        private readonly IConfiguration config;
 
         public Scraper(Uri sourceURL)
         {
             this.sourceURL = sourceURL;
+            config = Configuration.Default.WithDefaultLoader();
         }
 
-        public async Task<IReadOnlyList<Chapter>> GetChaptersFrom(DateTime earliestDate)
+        public async Task<IReadOnlyList<Chapter>> GetIndexChapters(DateTime earliestDate)
         {
-            Console.WriteLine($"Scraping {sourceURL} for chapters from {earliestDate.ToShortDateString()}");
+            Console.WriteLine($"Reading {sourceURL} index from page 1 back to {earliestDate.ToShortDateString()}");
 
-            var config = Configuration.Default.WithDefaultLoader();
             var context = BrowsingContext.New(config);
 
             var chapters = new List<Chapter>();
@@ -53,7 +55,7 @@ namespace Scion
                     // thumbnail within a day
                     else if (tag.ClassList.Contains("chapter"))
                     {
-                        var chapter = ParseChapter(currentDate, tag);
+                        var chapter = ParseIndexChapter(currentDate, tag);
                         pageChapters.Add(chapter);
                     }
                 }
@@ -69,7 +71,7 @@ namespace Scion
             return chapters;
         }
 
-        private Chapter ParseChapter(DateTime? date, IElement block)
+        private Chapter ParseIndexChapter(DateTime? date, IElement block)
         {
             if (!date.HasValue)
             {
@@ -96,8 +98,8 @@ namespace Scion
             {
                 series = regularSeries.Groups[1].Value;
                 subtitle = regularSeries.Groups[3].Success ? 
-                    $"Chapter {regularSeries.Groups[2].Value} - {regularSeries.Groups[4].Value}" :
-                    $"Chapter {regularSeries.Groups[2].Value}";
+                    $"Chapter {decimal.Parse(regularSeries.Groups[2].Value)} - {regularSeries.Groups[4].Value}" :
+                    $"Chapter {decimal.Parse(regularSeries.Groups[2].Value)}";
             }
             else
             {
@@ -120,6 +122,48 @@ namespace Scion
                 Doujin = doujin,
                 Series = series,
                 Subtitle = subtitle
+            };
+        }
+
+        public async Task<IReadOnlyList<Chapter>> GetSeriesChapters(Chapter sampleChapter)
+        {
+            Console.WriteLine($"Reading chapters from \"{sampleChapter.Series}\"");
+            if (sampleChapter.Series == null) throw new ArgumentException(nameof(sampleChapter.Series));
+
+            var context = BrowsingContext.New(config);
+
+            var samplePage = await context.OpenAsync(sampleChapter.Link.ToString());
+            var seriesLink = samplePage.QuerySelector("#chapter-title > b > a").GetAttribute("href");
+
+            var seriesPage = await context.OpenAsync(new Uri(sourceURL, seriesLink).ToString());   
+            var seriesDoujin = seriesPage.QuerySelector(".doujin_tags > *")?.TextContent;          
+            if (seriesDoujin != null) seriesDoujin = seriesDoujin.Substring(0, seriesDoujin.Length - " Doujin".Length);
+            var seriesTags = seriesPage.QuerySelectorAll("#main > tag-tags > a").Select(t => t.TextContent).ToList();
+
+            var chapterBlocks = seriesPage.QuerySelectorAll(".chapter-list > dd");
+
+            return chapterBlocks.Select(b => ParseSeriesChapter(b, seriesDoujin, sampleChapter.Authors, sampleChapter.Series, sampleChapter.Thumbnail, seriesTags)).ToList();
+        }
+
+        private Chapter ParseSeriesChapter(IElement block, string? doujin, string authors, string series, Uri thumbnail, IReadOnlyList<string> tags)
+        {
+            var date = block.QuerySelector("small").TextContent.Substring("released ".Length);
+            var subtitle = block.QuerySelector(".name").TextContent.Replace(":", " -");
+            var title = subtitle.Contains(':') ? $"{series} {subtitle}" : $"{series}: {subtitle}";
+            var link = block.QuerySelector(".name").GetAttribute("href");
+            var extraTags = block.QuerySelectorAll(".tags > a").Select(t => t.TextContent);         
+
+            return new Chapter
+            {
+                ReleaseDate = DateTime.ParseExact(date.Replace("'", ""), "MMM d y", null, DateTimeStyles.AllowInnerWhite),
+                Link = new Uri(sourceURL, block.QuerySelector(".name").GetAttribute("href")),
+                Thumbnail = thumbnail,
+                Doujin = doujin,
+                Authors = authors,
+                Title = title,
+                Series = series,
+                Subtitle = subtitle,
+                Tags = tags.Concat(extraTags).ToList()
             };
         }
     }

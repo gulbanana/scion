@@ -24,16 +24,29 @@ namespace Scion
             var data = new Data(options.DataDirectory, options.BaseDate);
             var config = data.Load();
             
-            var chapters = await source.GetChaptersFrom(data.GetEarliestDate());
+            var chapters = await source.GetIndexChapters(data.GetEarliestDate());
 
             foreach (var chapter in chapters.Where(Filter(config)).OrderBy(c => c.ReleaseDate))
             {
                 if (!data.HasChapter(chapter))
                 {
                     // XXX download images
-                    data.WriteChapter(chapter);
+                    if (chapter.Series != null)
+                    {
+                        var allSeriesChapters = await source.GetSeriesChapters(chapter);
+                        foreach (var seriesChapter in allSeriesChapters)
+                        {
+                            data.WriteChapter(seriesChapter);
+                        }
+                    }
+                    else
+                    {
+                        data.WriteChapter(chapter);
+                    }
                 }
             }
+
+            Console.WriteLine("Done.");
         }
 
         static Func<Chapter, bool> Filter(ConfigFile config) => chapter =>
@@ -63,7 +76,7 @@ namespace Scion
             foreach (var tag in section.Blacklist)
             {
                 var match = false;
-                
+
                 match = match || chapter.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase));
                 match = match || chapter.Authors.Equals(tag, StringComparison.OrdinalIgnoreCase);
                 match = match || (chapter.Doujin?.Equals(tag, StringComparison.OrdinalIgnoreCase) ?? false);
