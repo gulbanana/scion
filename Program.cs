@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Scion
@@ -19,11 +20,37 @@ namespace Scion
                 Environment.Exit(0);
             }
 
-            var data = new Data(options.DataDirectory, options.BaseDate);
-            data.Check();
             var source = new Scraper(options.SourceURL);
-            var latestRelease = await source.GetLatestRelease(data.GetEarliestDate());
-            data.Write(latestRelease);
+            var data = new Data(options.DataDirectory, options.BaseDate);
+            var config = data.Load();
+            
+            var chapters = await source.GetChaptersFrom(data.GetEarliestDate());
+
+            foreach (var chapter in chapters.Where(Filter(config)).OrderBy(c => c.ReleaseDate))
+            {                
+                Console.WriteLine(chapter);
+            }
         }
+
+        static Func<Chapter, bool> Filter(ConfigFile config) => chapter =>
+        {
+            if (config.TagWhitelist.Any())
+            {
+                if (!chapter.Tags.Any(t => config.TagWhitelist.Any(tag => t.Contains(tag, StringComparison.OrdinalIgnoreCase))))
+                {
+                    return false;
+                }
+            }
+
+            foreach (var tag in config.TagBlacklist)
+            {
+                if (chapter.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return false;
+                }
+            }
+            
+            return true;
+        };
     }
 }

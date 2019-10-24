@@ -17,9 +17,9 @@ namespace Scion
             this.sourceURL = sourceURL;
         }
 
-        public async Task<DateTime> GetLatestRelease(DateTime earliestDate)
+        public async Task<IReadOnlyList<Chapter>> GetChaptersFrom(DateTime earliestDate)
         {
-            Console.WriteLine($"Scraping {sourceURL}");
+            Console.WriteLine($"Scraping {sourceURL} for chapters from {earliestDate.ToShortDateString()}");
 
             var config = Configuration.Default.WithDefaultLoader();
             var context = BrowsingContext.New(config);
@@ -52,7 +52,8 @@ namespace Scion
                     // thumbnail within a day
                     else if (tag.ClassList.Contains("chapter"))
                     {
-                        pageChapters.Add(ParseChapter(currentDate, tag));
+                        var chapter = ParseChapter(currentDate, tag);
+                        pageChapters.Add(chapter);
                     }
                 }
 
@@ -64,12 +65,7 @@ namespace Scion
                 }
             } while (pageChapters.Count > 0);
             
-            foreach (var chapter in chapters.OrderBy(c => c.ReleaseDate))
-            {
-                Console.WriteLine(chapter);
-            }
-
-            return chapters.Select(chapter => chapter.ReleaseDate).First();
+            return chapters;
         }
 
         private Chapter ParseChapter(DateTime? date, IElement block)
