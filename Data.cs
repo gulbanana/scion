@@ -93,6 +93,19 @@ namespace Scion
             {
                 Console.WriteLine($"Writing file: {filePath}");
                 File.WriteAllText(filePath, "");
+                File.SetCreationTime(filePath, chapter.ReleaseDate);
+                File.SetLastWriteTime(filePath, chapter.ReleaseDate);
+                
+                var firstRelease = Directory.GetFiles(containerPath).Select(File.GetCreationTime).Min();
+                var lastRelease = Directory.GetFiles(containerPath).Select(File.GetCreationTime).Max();
+                Directory.SetCreationTime(containerPath, firstRelease);
+                Directory.SetLastWriteTime(containerPath, lastRelease);
+
+                var parentContainer = Directory.GetParent(containerPath).FullName;
+                var firstContainer = Directory.GetDirectories(parentContainer).Select(Directory.GetCreationTime).Min();
+                var lastContainer = Directory.GetDirectories(parentContainer).Select(Directory.GetLastWriteTime).Max();
+                Directory.SetCreationTime(parentContainer, firstContainer);
+                Directory.SetLastWriteTime(parentContainer, lastContainer);
             }
             else
             {
