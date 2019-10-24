@@ -104,7 +104,7 @@ namespace Scion
             
             var series = default(string?);
             var subtitle = default(string?);
-            var regularSeries = Regex.Match(title, @"(.*?) ch([0123456789]+)(: (.*))?");
+            var regularSeries = Regex.Match(title, @"(.*?) ch([^: a-zA-Z]+)(: (.*))?");
             if (regularSeries.Success)
             {
                 series = regularSeries.Groups[1].Value.Trim();
