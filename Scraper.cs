@@ -91,7 +91,7 @@ namespace Scion
             
             var series = default(string?);
             var subtitle = default(string?);
-            var regularSeries = Regex.Match(title, @"(.*) ch([^: ]*)(: (.*))?");
+            var regularSeries = Regex.Match(title, @"(.*?) ch([^: ]*)(: (.*))?");
             if (regularSeries.Success)
             {
                 series = regularSeries.Groups[1].Value;
@@ -101,10 +101,10 @@ namespace Scion
             }
             else
             {
-                var irregularSeries = Regex.Match(title, @"(.*) : (.*)");
+                var irregularSeries = Regex.Match(title, @"(.*?): (.*)");
                 if (irregularSeries.Success)
                 {
-                    series = irregularSeries.Groups[1].Value;
+                    series = irregularSeries.Groups[1].Value.Trim();
                     subtitle = irregularSeries.Groups[2].Value;
                 }
             }
@@ -115,7 +115,7 @@ namespace Scion
                 Link = new Uri(sourceURL, anchor.Href),
                 Thumbnail = new Uri(sourceURL, block.QuerySelector("img").GetAttribute("src")),
                 Title = title,
-                Authors = block.QuerySelector(".authors").TextContent,
+                Authors = block.QuerySelector(".authors").TextContent.Trim(),
                 Tags = block.QuerySelectorAll(".tags > .label").Select(t => t.TextContent).ToList(),
                 Doujin = doujin,
                 Series = series,
